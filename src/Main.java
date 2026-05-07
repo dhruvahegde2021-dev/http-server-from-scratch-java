@@ -1,7 +1,11 @@
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 
 public class Main {
     public static void main(String[] args) throws IOException {
@@ -12,7 +16,7 @@ public class Main {
             Socket client=server.accept();
             System.out.println("Client Connected");
             var input=client.getInputStream();
-            var reader=new java.io.BufferedReader(new java.io.InputStreamReader(input));
+            var reader=new BufferedReader(new InputStreamReader(input));
             String firstLine=reader.readLine();
             String[] words=firstLine.split(" ");
             String method=words[0];
@@ -34,33 +38,39 @@ public class Main {
             var output=client.getOutputStream();
             String body;
             String status;
-            if(path.equals("/")) {
-                path="src/intro.html";
-                status="200 OK";
-                body=new String(java.nio.file.Files.readAllBytes(java.nio.file.Paths.get("src/intro.html")));
+            String contentType = "";
+            if(path.equals("/"))
+            {
+                path="/index.html";
             }
-
-            else if(path.equals("/hello")){
-                path="src/index.html";
+            String filename=path.substring(1);
+            String fullPath="public/"+filename;
+            System.out.println(fullPath);
+            try{
+                if(filename.endsWith(".html"))
+                {
+                    contentType="text/html";
+                }
+                else if(filename.endsWith(".css"))
+                {
+                    contentType="text/css";
+                } else if (filename.endsWith(".js"))
+                {
+                    contentType="application/javascript";
+                }
+                else {
+                    contentType="text/plain";
+                }
+                body=new String(Files.readAllBytes(Paths.get(fullPath)));
                 status="200 OK";
-                body= new String(java.nio.file.Files.readAllBytes(java.nio.file.Paths.get("src/index.html")));
             }
-
-            else if(path.equals("/about")){
-                path="src/about.html";
-                status="200 OK";
-                body=new String(java.nio.file.Files.readAllBytes(java.nio.file.Paths.get("src/about.html")));
-            }
-
-            else {
-                path="src/error.html";
+            catch (Exception e) {
+                body=new String(Files.readAllBytes(Paths.get("public/error.html")));
                 status="404 Not Found";
-                body=new String(java.nio.file.Files.readAllBytes(java.nio.file.Paths.get("src/error.html")));;
             }
-
             String response =
                     "HTTP/1.1 "+ status +"\r\n" +
-                    "Content-Type: text/html\r\n" +
+                    "Content-Type:"+contentType+"\r\n" +
                     "Content-Length:"+body.length()+"\r\n"+
                     "\r\n"+
                     body;

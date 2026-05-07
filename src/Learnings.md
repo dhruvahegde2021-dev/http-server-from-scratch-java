@@ -30,3 +30,28 @@ Now , body of each path of localhost:8080/(path) shows HTML content when we hit 
 
 DAY-2 concluded here.
 
+DAY-3
+Replaced manual rooting by  dynamic file mapping
+Routed "/" -> "/index.html"
+Used substring() to extract only path 
+Built dynamic file path -> "public/" + string
+Used try catch block and handled response body and status
+Final workflow:
+Browser → sends request
+Server → extracts path
+Path → converted to filename
+Filename → mapped to public/ folder
+Server → reads file
+Server → sends HTTP response
+Browser → renders page
+
+DAY-3 concluded here.
+
+
+DAY-4
+Converted the content type to accept HTML,CSS and JS files
+Used .endsWith() to configure contentType as html, css or js or plain text
+Created a css file having blue bg and font style and linked it with index.html
+Run localhost:8080 -> gives blue screen of intro page
+
+DAY-4 concluded here.
