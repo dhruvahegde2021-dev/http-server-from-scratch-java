@@ -8,6 +8,38 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 
 public class Main {
+
+    public static String getFilePath(String path)
+    {
+        if(path.equals("/"))
+        {
+            path="/index.html";
+        }
+        String filename=path.substring(1);
+        return "public/"+filename;
+    }
+
+    public static String getContentType(String filename)
+    {
+        if(filename.endsWith(".html"))
+        {
+            return "text/html";
+        }
+        else if(filename.endsWith(".css"))
+        {
+            return "text/css";
+        } else if (filename.endsWith(".js"))
+        {
+            return "application/javascript";
+        } else if (filename.endsWith(".jpg")) {
+            return "image/jpeg";
+        } else if (filename.endsWith(".png")) {
+            return "image/png";
+        } else{
+            return "text/plain";
+        }
+    }
+
     public static void main(String[] args) throws IOException {
         ServerSocket server = new ServerSocket(8080);
         System.out.println("Sever started on port 8080");
@@ -30,52 +62,36 @@ public class Main {
             System.out.println(path);
 
 
-
             String line;
             while((line= reader.readLine())!=null && !line.isEmpty()) {
                 System.out.println(line);
             }
             var output=client.getOutputStream();
-            String body;
+            byte[] body;
             String status;
-            String contentType = "";
-            if(path.equals("/"))
-            {
-                path="/index.html";
-            }
-            String filename=path.substring(1);
-            String fullPath="public/"+filename;
+            String ContentType = "";
+            String fullPath=getFilePath(path);
+            String filename = Paths.get(fullPath).getFileName().toString();
             System.out.println(fullPath);
+
             try{
-                if(filename.endsWith(".html"))
-                {
-                    contentType="text/html";
-                }
-                else if(filename.endsWith(".css"))
-                {
-                    contentType="text/css";
-                } else if (filename.endsWith(".js"))
-                {
-                    contentType="application/javascript";
-                }
-                else {
-                    contentType="text/plain";
-                }
-                body=new String(Files.readAllBytes(Paths.get(fullPath)));
+                ContentType=getContentType(filename);
+                body=Files.readAllBytes(Paths.get(fullPath));
                 status="200 OK";
             }
             catch (Exception e) {
-                body=new String(Files.readAllBytes(Paths.get("public/error.html")));
+                body=Files.readAllBytes(Paths.get("public/error.html"));
                 status="404 Not Found";
             }
-            String response =
+            String header=
                     "HTTP/1.1 "+ status +"\r\n" +
-                    "Content-Type:"+contentType+"\r\n" +
-                    "Content-Length:"+body.length()+"\r\n"+
-                    "\r\n"+
-                    body;
+                    "Content-Type:"+ContentType+"\r\n" +
+                    "Content-Length:"+body.length+"\r\n"+
+                    "\r\n";
 
-            output.write(response.getBytes());
+            output.write(header.getBytes());
+            output.write(body);
+            output.flush();
             client.close();
         }
     }
