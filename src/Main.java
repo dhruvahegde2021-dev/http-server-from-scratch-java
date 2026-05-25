@@ -79,6 +79,23 @@ public class Main {
                     byte[] body;
                     String status;
                     String contentType = "";
+                    if(path.equals("/hello"))
+                    {
+                        try{
+                            body=Files.readAllBytes(Paths.get("public/hello.html"));
+                            String header =
+                                    "HTTP/1.1 200 OK\r\n" +
+                                            "Content-Type: text/html\r\n" +
+                                            "Content-Length: " + body.length + "\r\n" +
+                                            "\r\n";
+                            output.write(header.getBytes());
+                            output.write(body);
+                            output.flush();
+                            client.close();
+                        } catch (Exception e) {
+                            throw new RuntimeException(e);
+                        }
+                    }
                     String fullPath = getFilePath(path);
                     String filename =
                             Paths.get(fullPath)
