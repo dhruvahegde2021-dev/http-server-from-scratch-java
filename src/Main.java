@@ -2,6 +2,7 @@
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.file.Files;
@@ -15,7 +16,11 @@ public class Main {
         {
             path="/index.html";
         }
-        String filename=path.substring(1);
+        String filename = path.substring(1);
+        if(!filename.contains("."))
+        {
+            filename = filename + ".html";
+        }
         return "public/"+filename;
     }
 
@@ -40,6 +45,24 @@ public class Main {
         }
     }
 
+    public static boolean handleRoute(String path, Socket client, OutputStream  output) throws IOException {
+        if(path.equals("/hello"))
+        {
+                byte[] body=Files.readAllBytes(Paths.get("public/hello.html"));
+                String header =
+                        "HTTP/1.1 200 OK\r\n" +
+                                "Content-Type: text/html\r\n" +
+                                "Content-Length: " + body.length + "\r\n" +
+                                "\r\n";
+                output.write(header.getBytes());
+                output.write(body);
+                output.flush();
+                client.close();
+                return true;
+        }
+        return false;
+
+    }
     public static void main(String[] args) throws IOException {
         ServerSocket server = new ServerSocket(8080);
         System.out.println("Sever started on port 8080");
@@ -76,26 +99,13 @@ public class Main {
                     }
 
                     var output = client.getOutputStream();
+                    if(handleRoute(path,client,output))
+                    {
+                        return;
+                    }
                     byte[] body;
                     String status;
                     String contentType = "";
-                    if(path.equals("/hello"))
-                    {
-                        try{
-                            body=Files.readAllBytes(Paths.get("public/hello.html"));
-                            String header =
-                                    "HTTP/1.1 200 OK\r\n" +
-                                            "Content-Type: text/html\r\n" +
-                                            "Content-Length: " + body.length + "\r\n" +
-                                            "\r\n";
-                            output.write(header.getBytes());
-                            output.write(body);
-                            output.flush();
-                            client.close();
-                        } catch (Exception e) {
-                            throw new RuntimeException(e);
-                        }
-                    }
                     String fullPath = getFilePath(path);
                     String filename =
                             Paths.get(fullPath)
