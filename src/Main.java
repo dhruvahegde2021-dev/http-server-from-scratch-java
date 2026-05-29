@@ -45,10 +45,11 @@ public class Main {
         }
     }
 
-    public static boolean handleRoute(String path, Socket client, OutputStream  output) throws IOException {
+    public static boolean handleRoute(String path, Socket client, OutputStream  output, String value) throws IOException {
         if(path.equals("/hello"))
         {
-                byte[] body=Files.readAllBytes(Paths.get("public/hello.html"));
+                String message="<h1>Hello"+value+"</h1>";
+                byte[] body=message.getBytes();
                 String header =
                         "HTTP/1.1 200 OK\r\n" +
                                 "Content-Type: text/html\r\n" +
@@ -82,6 +83,21 @@ public class Main {
                     String[] words = firstLine.split(" ");
                     String method = words[0];
                     String path = words[1];
+                    String query="";
+                    String value="";
+                    if(path.contains("?"))
+                    {
+                        String[] parts=path.split("\\?");
+                        path=parts[0];
+                        query=parts[1];
+                        System.out.println("Path:"+path);
+                        System.out.println("Query:"+query);
+                        String[] queryParts=query.split("=");
+                        String key=queryParts[0];
+                        value=queryParts[1];
+                        System.out.println("Key:"+key);
+                        System.out.println("Value:"+value);
+                    }
 
                     if (path.equals("/favicon.ico")) {
                         client.close();
@@ -99,7 +115,7 @@ public class Main {
                     }
 
                     var output = client.getOutputStream();
-                    if(handleRoute(path,client,output))
+                    if(handleRoute(path,client,output,value))
                     {
                         return;
                     }
