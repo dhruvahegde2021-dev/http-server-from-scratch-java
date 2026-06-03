@@ -19,7 +19,7 @@ public class Main {
         String filename = path.substring(1);
         if(!filename.contains("."))
         {
-            filename = filename + ".html";
+            filename = filename + ".html";//dynamic routing i.e http // about -> about.html
         }
         return "public/"+filename;
     }
@@ -45,10 +45,18 @@ public class Main {
         }
     }
 
+    /*
+        Browser sends request to server in form of GET  , POST
+        GET displays available data
+        POST fetches data frim requestBody
+
+        Server sends response to browser with help of header
+        header contains HTTP response , content type , length and status code
+     */
     public static boolean handleRoute(String path, Socket client, OutputStream  output, String value) throws IOException {
         if(path.equals("/hello"))
         {
-                String message="<h1>Hello"+value+"</h1>";
+                String message="<h1>Hello \t"+value+"</h1>";
                 byte[] body=message.getBytes();
                 String header =
                         "HTTP/1.1 200 OK\r\n" +
@@ -73,7 +81,7 @@ public class Main {
             Thread thread = new Thread(() ->
             {
                 try {
-                    System.out.println(Thread.currentThread().getName());
+                    System.out.println(Thread.currentThread().getName());//multithreading
                     System.out.println("Client Connected");
                     var input = client.getInputStream();
                     var reader = new BufferedReader(
@@ -83,18 +91,24 @@ public class Main {
                     String[] words = firstLine.split(" ");
                     String method = words[0];
                     String path = words[1];
+                    System.out.println("Method:"+method);
                     String query="";
                     String value="";
-                    if(path.contains("?"))
+                    /*
+                        for GET:
+                        Browser -> GET -> server -> Response -> displays available data
+                        ex:hello?name=dhruva displays hello dhruva
+                     */
+                    if(path.contains("?")) //GET request from browser
                     {
-                        String[] parts=path.split("\\?");
-                        path=parts[0];
-                        query=parts[1];
+                        String[] parts=path.split("\\?");// ex:hello?name=dhruva
+                        path=parts[0];//hello
+                        query=parts[1];//name=dhruva
                         System.out.println("Path:"+path);
                         System.out.println("Query:"+query);
-                        String[] queryParts=query.split("=");
-                        String key=queryParts[0];
-                        value=queryParts[1];
+                        String[] queryParts=query.split("=");//name=dhruva
+                        String key=queryParts[0];//name
+                        value=queryParts[1];//dhruva
                         System.out.println("Key:"+key);
                         System.out.println("Value:"+value);
                     }
@@ -113,16 +127,51 @@ public class Main {
                             && !line.isEmpty()) {
                         System.out.println(line);
                     }
-
                     var output = client.getOutputStream();
                     if(handleRoute(path,client,output,value))
                     {
                         return;
                     }
+                    /*for POST:
+                    Browser->login and password -> POST -> server -> requestBody -> response -> fetches data from requestBody
+                    and displays
+                    */
+                    if(method.equals("POST"))
+                    {
+                        char[] bodyChar=new char[1000];
+                        int length=reader.read(bodyChar);
+                        String requestBody=new String(bodyChar,0,length);
+                        System.out.println(requestBody);
+                        String[] pairs=requestBody.split("&");// username=dhruva&password=abc
+                        String pair1=pairs[0];//username=dhruva
+                        String pair2=pairs[1];//password=abc
+                        String pvalue = "";
+                        for(String pair:pairs) {
+                            String[] parts = pair.split("=");
+                            String key = parts[0];//username and password
+                            pvalue = parts[1];// dhruva and abc
+                            System.out.println("Key:" + key);
+                            System.out.println("Value:" + pvalue);
+                        }
+                        if(path.equals("/login"))
+                        {
+                            String message="<h1> HELLO \t"+pvalue+"</h1>";//formatting message on screen
+                            byte[] body=message.getBytes();
+                            String header= "HTTP/1.1 200 OK\r\n" +// header is the response to browser request
+                                    "Content-Type: text/html\r\n" +
+                                    "Content-Length: " + body.length + "\r\n" +
+                                    "\r\n";
+                            output.write(header.getBytes()); // HTTP reads only bytes
+                            output.write(body);
+                            client.close();
+                            return;
+                        }
+                    }
+
                     byte[] body;
                     String status;
                     String contentType = "";
-                    String fullPath = getFilePath(path);
+                    String fullPath = getFilePath(path); // in built method to get path
                     String filename =
                             Paths.get(fullPath)
                                     .getFileName()
@@ -131,15 +180,15 @@ public class Main {
                     System.out.println(fullPath);
 
                     try {
-                        contentType = getContentType(filename);
+                        contentType = getContentType(filename);//content type -html , css or js
                         body = Files.readAllBytes(
-                                Paths.get(fullPath)
+                                Paths.get(fullPath) // converting path to bytes for HTTP
                         );
 
                         status = "200 OK";
                     } catch (Exception e) {
                         body = Files.readAllBytes(
-                                Paths.get("public/error.html")
+                                Paths.get("public/error.html") // for invalid , laod error.htnl
                         );
 
                         status = "404 Not Found";
