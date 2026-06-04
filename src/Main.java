@@ -7,6 +7,8 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.HashMap;
+import java.util.Map;
 
 public class Main {
 
@@ -53,10 +55,10 @@ public class Main {
         Server sends response to browser with help of header
         header contains HTTP response , content type , length and status code
      */
-    public static boolean handleRoute(String path, Socket client, OutputStream  output, String value) throws IOException {
-        if(path.equals("/hello"))
+    public static boolean handleRoute( Request request,Socket client, OutputStream  output) throws IOException {
+        if(request.path.equals("/hello"))
         {
-                String message="<h1>Hello \t"+value+"</h1>";
+                String message="<h1>Hello \t"+request.map.get("username")+"</h1>";
                 byte[] body=message.getBytes();
                 String header =
                         "HTTP/1.1 200 OK\r\n" +
@@ -128,41 +130,73 @@ public class Main {
                         System.out.println(line);
                     }
                     var output = client.getOutputStream();
-                    if(handleRoute(path,client,output,value))
-                    {
-                        return;
-                    }
                     /*for POST:
                     Browser->login and password -> POST -> server -> requestBody -> response -> fetches data from requestBody
                     and displays
                     */
+                    Map<String, String> mpp = new HashMap<>();
+
                     if(method.equals("POST"))
                     {
-                        char[] bodyChar=new char[1000];
-                        int length=reader.read(bodyChar);
-                        String requestBody=new String(bodyChar,0,length);
+                        char[] bodyChar = new char[1000];
+                        int length = reader.read(bodyChar);
+
+                        String requestBody =
+                                new String(bodyChar, 0, length);
+
                         System.out.println(requestBody);
-                        String[] pairs=requestBody.split("&");// username=dhruva&password=abc
-                        String pair1=pairs[0];//username=dhruva
-                        String pair2=pairs[1];//password=abc
-                        String pvalue = "";
-                        for(String pair:pairs) {
-                            String[] parts = pair.split("=");
-                            String key = parts[0];//username and password
-                            pvalue = parts[1];// dhruva and abc
-                            System.out.println("Key:" + key);
-                            System.out.println("Value:" + pvalue);
-                        }
-                        if(path.equals("/login"))
+
+                        String[] pairs = requestBody.split("&");
+
+                        for(String pair : pairs)
                         {
-                            String message="<h1> HELLO \t"+pvalue+"</h1>";//formatting message on screen
-                            byte[] body=message.getBytes();
-                            String header= "HTTP/1.1 200 OK\r\n" +// header is the response to browser request
-                                    "Content-Type: text/html\r\n" +
-                                    "Content-Length: " + body.length + "\r\n" +
-                                    "\r\n";
-                            output.write(header.getBytes()); // HTTP reads only bytes
+                            String[] parts = pair.split("=");
+
+                            String key = parts[0];
+                            value = parts[1];
+
+                            mpp.put(key, value);
+                        }
+
+                        Request request =
+                                new Request(method, path, mpp);
+
+                        if(handleRoute(request,client,output))
+                        {
+                            return;
+                        }
+
+                        System.out.println("Method: " + request.method);
+                        System.out.println("Path: " + request.path);
+
+                        System.out.println(
+                                request.map.get("username")
+                        );
+
+                        System.out.println(
+                                request.map.get("password")
+                        );
+
+                        if(request.path.equals("/login"))
+                        {
+                            String username =
+                                    request.map.get("username");
+
+                            String message =
+                                    "<h1>HELLO " + username + "</h1>";
+
+                            byte[] body = message.getBytes();
+
+                            String header =
+                                    "HTTP/1.1 200 OK\r\n" +
+                                            "Content-Type: text/html\r\n" +
+                                            "Content-Length: " + body.length + "\r\n" +
+                                            "\r\n";
+
+                            output.write(header.getBytes());
                             output.write(body);
+                            output.flush();
+
                             client.close();
                             return;
                         }
