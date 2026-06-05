@@ -50,25 +50,18 @@ public class Main {
     /*
         Browser sends request to server in form of GET  , POST
         GET displays available data
-        POST fetches data frim requestBody
+        POST fetches data from requestBody
 
         Server sends response to browser with help of header
         header contains HTTP response , content type , length and status code
      */
-    public static boolean handleRoute( Request request,Socket client, OutputStream  output) throws IOException {
+
+    //request here is blank , it works in POST method and not for GET as of now
+    public static boolean handleRoute( Request request,Socket client, OutputStream  output) throws IOException { // introducing request obj
         if(request.path.equals("/hello"))
         {
-                String message="<h1>Hello \t"+request.map.get("username")+"</h1>";
-                byte[] body=message.getBytes();
-                String header =
-                        "HTTP/1.1 200 OK\r\n" +
-                                "Content-Type: text/html\r\n" +
-                                "Content-Length: " + body.length + "\r\n" +
-                                "\r\n";
-                output.write(header.getBytes());
-                output.write(body);
-                output.flush();
-                client.close();
+                Response response=new Response(output);//using obj of Response class
+                response.sendHtml("<h1>Hello \t"+request.map.get("username")+"</h1>");//request.map.get is blank here bcz map is present in POST block
                 return true;
         }
         return false;
@@ -146,22 +139,22 @@ public class Main {
 
                         System.out.println(requestBody);
 
-                        String[] pairs = requestBody.split("&");
+                        String[] pairs = requestBody.split("&");// ex:username=dhruva&password=abc
 
                         for(String pair : pairs)
                         {
                             String[] parts = pair.split("=");
 
-                            String key = parts[0];
-                            value = parts[1];
+                            String key = parts[0];// username and password
+                            value = parts[1];//dhruva and abc
 
-                            mpp.put(key, value);
+                            mpp.put(key, value);//map the key and value
                         }
 
                         Request request =
-                                new Request(method, path, mpp);
+                                new Request(method, path, mpp);//object of Request class
 
-                        if(handleRoute(request,client,output))
+                        if(handleRoute(request,client,output))// Replacing path by request object
                         {
                             return;
                         }
@@ -181,21 +174,13 @@ public class Main {
                         {
                             String username =
                                     request.map.get("username");
-
-                            String message =
-                                    "<h1>HELLO " + username + "</h1>";
-
-                            byte[] body = message.getBytes();
-
-                            String header =
-                                    "HTTP/1.1 200 OK\r\n" +
-                                            "Content-Type: text/html\r\n" +
-                                            "Content-Length: " + body.length + "\r\n" +
-                                            "\r\n";
-
-                            output.write(header.getBytes());
-                            output.write(body);
-                            output.flush();
+                        /*
+                            Response class contains entire code of response we are sending to HTTP
+                            So we repalce the entire header , output stream , byte array and input string
+                             and call function sendHtml()
+                         */
+                            Response response=new Response(output);
+                            response.sendHtml( "<h1>Response Class Works!</h1>");
 
                             client.close();
                             return;
