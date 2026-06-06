@@ -60,8 +60,9 @@ public class Main {
     public static boolean handleRoute( Request request,Socket client, OutputStream  output) throws IOException { // introducing request obj
         if(request.path.equals("/hello"))
         {
-                Response response=new Response(output);//using obj of Response class
-                response.sendHtml("<h1>Hello \t"+request.map.get("username")+"</h1>");//request.map.get is blank here bcz map is present in POST block
+                Response response=new Response(output);
+                String name=request.queryParam.get("name");//using obj of Request class
+                response.sendHtml("<h1>Hello \t"+name+"</h1>");
                 return true;
         }
         return false;
@@ -86,6 +87,7 @@ public class Main {
                     String[] words = firstLine.split(" ");
                     String method = words[0];
                     String path = words[1];
+                    Map<String ,String> queryParam=new HashMap<>();//query parameters
                     System.out.println("Method:"+method);
                     String query="";
                     String value="";
@@ -96,16 +98,23 @@ public class Main {
                      */
                     if(path.contains("?")) //GET request from browser
                     {
-                        String[] parts=path.split("\\?");// ex:hello?name=dhruva
+                        String[] parts=path.split("\\?",2);// ex:/hello?name=dhruva&city=bangalore
                         path=parts[0];//hello
-                        query=parts[1];//name=dhruva
+                        query=parts[1];//name=dhruva&city=bangalore
                         System.out.println("Path:"+path);
                         System.out.println("Query:"+query);
-                        String[] queryParts=query.split("=");//name=dhruva
-                        String key=queryParts[0];//name
-                        value=queryParts[1];//dhruva
-                        System.out.println("Key:"+key);
-                        System.out.println("Value:"+value);
+                        String[] pairs=query.split("&",2); //name=dhruva and city=bangalore
+                        for(String pair:pairs)
+                        {
+                            String[] queryParts=pair.split("=",2);//name and city , dhruva and banglore
+                            String key=queryParts[0];//name and city
+                            value=queryParts[1];//dhruva and banglore
+                            queryParam.put(key,value);//map name to dhruva and city to banglore
+                            System.out.println("Path:"+path);
+                            System.out.println("Key:"+key);
+                            System.out.println("Value:"+queryParam.get("name"));//dhruva
+                            System.out.println("Value:"+queryParam.get("city"));//banglore
+                        }
                     }
 
                     if (path.equals("/favicon.ico")) {
@@ -152,7 +161,7 @@ public class Main {
                         }
 
                         Request request =
-                                new Request(method, path, mpp);//object of Request class
+                                new Request(method, path,queryParam, mpp);//object of Request class
 
                         if(handleRoute(request,client,output))// Replacing path by request object
                         {
