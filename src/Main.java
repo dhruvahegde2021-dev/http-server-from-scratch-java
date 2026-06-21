@@ -7,11 +7,13 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class Main {
-
+    static List<User> users=new ArrayList<>();// List of users
     public static String getFilePath(String path)
     {
         if(path.equals("/"))
@@ -58,6 +60,8 @@ public class Main {
 
     //request here is blank , it works in POST method and not for GET as of now
     public static boolean handleRoute( Request request,Socket client, OutputStream  output) throws IOException { // introducing request obj
+        System.out.println("REQUEST PATH = [" + request.path + "]");
+        System.out.println(request.path.equals("/api/user"));
         if(request.path.equals("/hello"))
         {
                 Response response=new Response(output);
@@ -65,10 +69,35 @@ public class Main {
                 response.sendHtml("<h1>Hello \t"+name+"</h1>");
                 return true;
         }
+        if(request.path.equals("/api/user"))// only for one user Dhruva
+        {
+            Response response=new Response(output);
+            response.sendJson("{\"name\":\"Dhruva\"}");// sending JSON data as request
+            return true;
+        }
+        if(request.path.equals("/users"))
+        {
+            Response response=new Response(output);
+            String json ="[";
+            for(int i=0;i<users.size();i++)
+            {
+                User user=users.get(i);                                 //Fetch each user from list
+                json+="{\"id\":" + user.id +
+                        ",\"name\":\"" + user.name + "\"}";             //send their JSON as ex: {id:1},{name:Dhruva}
+                if(i<users.size()-1)
+                {
+                    json+=",";
+                }
+            }
+            json+="]";
+            response.sendJson(json); // sending JSON as data for GET request
+        }
         return false;
-
     }
     public static void main(String[] args) throws IOException {
+        users.add(new  User(1,"Dhruva"));// user 1
+        users.add(new  User(2,"Alice"));//user 2
+
         ServerSocket server = new ServerSocket(8080);
         System.out.println("Sever started on port 8080");
         while (true) {
@@ -195,10 +224,15 @@ public class Main {
                             return;
                         }
                     }
-
+                    Request request =
+                            new Request(method, path,queryParam, mpp);//object of Request class
+                    if(handleRoute(request,client,output))// Replacing path by request object
+                    {
+                        return;
+                    }
                     byte[] body;
                     String status;
-                    String contentType = "";
+                    String contentType = "";    
                     String fullPath = getFilePath(path); // in built method to get path
                     String filename =
                             Paths.get(fullPath)
