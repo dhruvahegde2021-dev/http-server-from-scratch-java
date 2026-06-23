@@ -1,3 +1,6 @@
+/*
+    Form accepting username and password and when submit is hit, browser reads it as a POST request
+*/
 <form method="POST" action="/login">
     <input type="text" name="username">
 
@@ -6,4 +9,14 @@
     <button type="submit">
         Submit
     </button>
+</form>
+
+/*
+    Form accepting name and when add user button is hit ,browser reads it as a POST request and
+    redirected to /users
+*/
+
+<form action="/users" method="POST">
+        <input type="text" name="name">
+        <button> Add User</button>
 </form>

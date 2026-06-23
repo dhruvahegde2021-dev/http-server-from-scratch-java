@@ -54,7 +54,7 @@ public class Main {
         GET displays available data
         POST fetches data from requestBody
 
-        Server sends response to browser with help of header
+        Server sends response to browser with help of header.
         header contains HTTP response , content type , length and status code
      */
 
@@ -75,7 +75,74 @@ public class Main {
             response.sendJson("{\"name\":\"Dhruva\"}");// sending JSON data as request
             return true;
         }
-        if(request.path.equals("/users"))
+
+        if(request.path.startsWith("/users/"))     //fetching user by id
+        {
+            Response response=new Response(output);
+            String[] parts=request.path.split("/"); //example: http://localhost:8080/users/1
+            int userId=Integer.parseInt(parts[2]); // userId=1
+            System.out.println(userId);
+            for(User user:users)
+            {
+                if(user.id==userId)                 //if id in request and user id is matching
+                {                                           // JSON in form of {id: 1 , name:} is sent as response
+                    String json =
+                            "{\"id\":" + user.id +
+                                    ",\"name\":\"" + user.name + "\"}";
+                    response.sendJson(json);
+                    return true;
+                }
+                else {
+                    response.sendJson(
+                            "{\"error\":\"User "+userId +"  not found\"}"       //if not , JSON is sent as {error:1 not found}
+                    );
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        if(request.path.equals("/users") && request.method.equals("POST"))    //adding new user with id and name
+        {
+            Response response=new Response(output);
+            String name=request.map.get("name");        //obtained from the form
+            /*
+                When we hit add user in form , POST request is sent and requestBody conatins name
+                reuqest.map contains (name,Bob)
+                Key:name , Value:Bob
+            */
+            int id=users.size()+1;          //id of new user
+            users.add(new User(id,name));       //new user added into the list of users
+            response.sendJson("{\"message\":\"User added\"}");      //response sent in JSON saying user was added
+            return true;
+        }
+
+        if(request.path.startsWith("/users/")
+                && request.method.equals("DELETE"))
+        {
+            Response response=new Response(output);
+            String[] parts=request.path.split("/");
+            int userId=Integer.parseInt(parts[2]);
+            for(int i=0;i<users.size();i++)
+            {
+                if(users.get(i).id==userId)
+                {
+                    users.remove(i);
+                    response.sendJson(
+                            "{\"message\":\"User deleted\"}"
+                    )
+                    return true;
+                }
+            }
+            response.sendJson(
+                    "{\"error\":\"User not found\"}"
+            );
+            return true;
+        }
+
+
+        if(request.path.startsWith("/users/")
+                && request.method.equals("GET"))
         {
             Response response=new Response(output);
             String json ="[";
